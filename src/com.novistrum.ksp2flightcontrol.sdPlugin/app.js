@@ -11,6 +11,10 @@ $SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) =
 
 myAction.onKeyUp(({ action, context, device, event, payload }) => {
 	console.log('Your key code goes here!');
+	console.log(action)
+	console.log(context)
+	console.log(event)
+	console.log(payload)
 
 });
 
@@ -24,4 +28,4 @@ myAction.onSendToPlugin(({ ActionGroup }) => {
 	$SD.setTitle(ActionGroup)
 });
 
-DistributionTool.exe -b -i com.elgato.counter.sdPlugin -o Release
+///.\DistributionTool.exe -b -i src\com.novistrum.ksp2flightcontrol.sdPlugin -o Release
