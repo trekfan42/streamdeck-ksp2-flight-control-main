@@ -18,8 +18,10 @@ myAction.onDialRotate(({ action, context, device, event, payload }) => {
 	console.log('Your dial code goes here!');
 });
 
-myAction.onSendToPlugin(({ payload }) => {
-	console.log('payload received');
-	console.log(payload);
-	$SD.setTitle(payload)
+myAction.onSendToPlugin(({ ActionGroup }) => {
+	console.log('Action Group Selection received');
+	console.log(ActionGroup);
+	$SD.setTitle(ActionGroup)
 });
+
+DistributionTool.exe -b -i com.elgato.counter.sdPlugin -o Release
