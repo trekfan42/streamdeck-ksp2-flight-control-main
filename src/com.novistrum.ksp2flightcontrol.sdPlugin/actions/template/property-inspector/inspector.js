@@ -2,24 +2,31 @@
 /// <reference path="../../../libs/js/utils.js" />
 
 $PI.onConnected((jsn) => {
-    console.log(jsn);
-    console.log("Hello There")
+    console.log("Property Inspector connected");
 
 });
 
 const updateButton = function() {
     if($PI) {
         console.log("Action Group Selected")
-        var payload = document.getElementById("agSelect").value;
-        $PI.sendToPlugin(payload)
+        var ActionGroup = document.getElementById("agSelect").value;
+        $PI.setSettings({ action: ActionGroup });
+        
     }
-    else {
-        console.log("Action Group Not Selected")
-    }
+
 }
 
 
-$PI.onDidReceiveGlobalSettings(({payload}) => {
-    console.log('onDidReceiveGlobalSettings', payload);
-})
 
+
+$PI.onDidReceiveSettings(({ payload }) => {
+    console.log('onDidReceiveSettings', payload);
+    const selectedValue = payload.settings.action || 'None';
+    document.getElementById("agSelect").value = selectedValue;
+});
+
+$PI.onDidReceiveGlobalSettings(({ payload }) => {
+    console.log('onDidReceiveGlobalSettings', payload);
+    const selectedValue = payload.settings.action || 'None';
+    document.getElementById("agSelect").value = selectedValue;
+});
