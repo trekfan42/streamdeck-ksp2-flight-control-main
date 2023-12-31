@@ -146,9 +146,10 @@ myAction.onKeyUp(({ context, payload }) => {
         .then(data => {
             /// Handle the response data as needed
             console.log('Returned data:', data);
-
+			console.log("Status:", data.Data.Status)
+			
             /// set button state to match response
-            const newState = data.Status === 'True' ? 1 : 0;
+            const newState = data.Data.Status === 'True' ? 1 : 0;
 
 			console.log(newState)
 
