@@ -1,0 +1,43 @@
+{
+	"SDKVersion": 2,
+	"Author": "Novistrum",
+	"CodePath": "app.html",
+	"Description": "Example description",
+	"Name": "KSP2 Flight Control",
+	"Icon": "actions/template/assets/action",
+	"URL": "",
+	"Version": "1.0.0",
+	"Software": {
+		"MinimumVersion": "5.0"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "10.11"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Category": "KSP2 Flight Control",
+	"CategoryIcon": "actions/template/assets/actionimage",
+	"Actions": [
+		{
+			"Icon": "actions/template/assets/actionimage",
+			"Name": "Action Group Trigger",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "actions/template/assets/action"
+				},
+				{
+					"Image": "actions/template/assets/action2"
+				}
+			],
+			"Tooltip": "Tigger an Action Group with a button press",
+			"UUID": "com.novistrum.ksp2flightcontrol.action",
+			"PropertyInspectorPath": "actions/template/property-inspector/inspector.html"
+		}
+	]
+}

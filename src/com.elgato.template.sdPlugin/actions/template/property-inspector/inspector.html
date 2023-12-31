@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta
+          name="viewport"
+          content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <title>com.elgato.template Property Inspector</title>
+    <link rel="stylesheet" href="../../../libs/css/sdpi.css" />
+</head>
+
+<body>
+    <div class="sdpi-wrapper">
+
+        <div class="sdpi-item" id="select_single">
+            <div class="sdpi-item-label">Action Group</div>
+            <select class="sdpi-item-value select" id="agSelect" onchange="updateButton()">
+               <option value="gear">Gear</option>
+               <option value="lights">Lights</option>
+               <option value="brakes">Brakes</option>
+               <option value="ag1">1</option>
+               <option value="ag2">2</option>
+               <option value="ag3">3</option>
+               <option value="ag4">4</option>
+               <option value="ag5">5</option>
+               <option value="ag6">6</option>
+               <option value="ag7">7</option>
+               <option value="ag8">8</option>
+               <option value="ag9">9</option>
+               <option value="ag10">10</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="sdpi-info-label hidden" style="top: -1000" value=""></div>
+
+    <!-- Stream Deck Libs -->
+    <script src="../../../libs/js/constants.js"></script>
+    <script src="../../../libs/js/prototypes.js"></script>
+    <script src="../../../libs/js/timers.js"></script>
+    <script src="../../../libs/js/utils.js"></script>
+    <script src="../../../libs/js/events.js"></script>
+    <script src="../../../libs/js/api.js"></script>
+    <script src="../../../libs/js/property-inspector.js"></script>
+    <script src="../../../libs/js/dynamic-styles.js"></script>
+
+    <!-- Property Inspector Source -->
+    <script src="inspector.js"></script>
+</body>
+
+</html>
