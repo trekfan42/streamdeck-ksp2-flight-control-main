@@ -13,11 +13,6 @@ $SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) =
 });
 
 
-myAction.onWillDisappear(() => {
-    clearInterval(updateInterval);
-});
-
-
 /// Function to handle adding a new button to the buttons array
 function addButton(context, actionGroup) {
     // Check if a button with the same context already exists
@@ -79,6 +74,7 @@ async function updateButtonState(button) {
 
 // Function to periodically update button states
 function updateButtonStates() {
+	console.log("updating button states")
     buttons.forEach(button => {
         updateButtonState(button);
     });
@@ -145,13 +141,10 @@ myAction.onKeyUp(({ context, payload }) => {
         .then(response => response.json())
         .then(data => {
             /// Handle the response data as needed
-            console.log('Returned data:', data);
 			console.log("Status:", data.Data.Status)
-			
+
             /// set button state to match response
             const newState = data.Data.Status === 'True' ? 1 : 0;
-
-			console.log(newState)
 
             /// Use arrow function to maintain context
             $SD.setState(context, newState);

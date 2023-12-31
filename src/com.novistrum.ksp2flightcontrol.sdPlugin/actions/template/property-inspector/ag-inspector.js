@@ -10,6 +10,7 @@ const updateButton = function() {
     if($PI) {
         console.log("Action Group Selected")
         var ActionGroup = document.getElementById("agSelect").value;
+        console.log("Inspector Selected Action Group:", ActionGroup)
         $PI.setSettings({ action: ActionGroup });
         
     }

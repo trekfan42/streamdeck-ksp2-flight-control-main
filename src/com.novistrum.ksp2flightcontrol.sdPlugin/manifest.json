@@ -4,7 +4,7 @@
 	"CodePath": "app.html",
 	"Description": "Example description",
 	"Name": "KSP2 Flight Control",
-	"Icon": "actions/template/assets/action",
+	"Icon": "actions/template/assets/plugin",
 	"URL": "",
 	"Version": "1.0.0",
 	"Software": {
@@ -21,15 +21,16 @@
 		}
 	],
 	"Category": "KSP2 Flight Control",
-	"CategoryIcon": "actions/template/assets/actionimage",
+	"CategoryIcon": "actions/template/assets/plugin",
 	"Actions": [
+
 		{
-			"Icon": "actions/template/assets/actionimage",
+			"Icon": "actions/template/assets/action1",
 			"Name": "Action Group Trigger",
 			"Controllers": ["Keypad"],
 			"States": [
 				{
-					"Image": "actions/template/assets/action"
+					"Image": "actions/template/assets/action1"
 				},
 				{
 					"Image": "actions/template/assets/action2"
@@ -37,7 +38,59 @@
 			],
 			"Tooltip": "Tigger an Action Group with a button press",
 			"UUID": "com.novistrum.ksp2flightcontrol.action",
-			"PropertyInspectorPath": "actions/template/property-inspector/inspector.html"
+			"PropertyInspectorPath": "actions/template/property-inspector/ag-inspector.html"
+		},
+
+		{
+			"Icon": "actions/template/assets/launch",
+			"Name": "Staging",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "actions/template/assets/launch"
+				}
+			],
+			"Tooltip": "Launch and Stage your Vessel",
+			"UUID": "com.novistrum.ksp2flightcontrol.staging"
+		},
+
+		{
+			"Icon": "actions/template/assets/blank",
+			"Name": "SAS Mode",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "actions/template/assets/blank"
+				}
+			],
+			"Tooltip": "Set the SAS Mode of the Vessel",
+			"UUID": "com.novistrum.ksp2flightcontrol.sas"
+		},
+
+		{
+			"Icon": "actions/template/assets/abort",
+			"Name": "Abort",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "actions/template/assets/abort"
+				}
+			],
+			"Tooltip": "Trigger your Abort Action Group",
+			"UUID": "com.novistrum.ksp2flightcontrol.abort"
+		},
+		
+		{
+			"Icon": "actions/template/assets/blank",
+			"Name": "Thrust",
+			"Controllers": ["Encoder"],
+			"States": [
+				{
+					"Image": "actions/template/assets/blank"
+				}
+			],
+			"Tooltip": "Control the Thrust of your Stage",
+			"UUID": "com.novistrum.ksp2flightcontrol.thrust"
 		}
 	]
 }
