@@ -30,15 +30,10 @@
 			"Controllers": ["Keypad"],
 			"States": [
 				{
-					"Image": "actions/template/assets/action1",
-					"TitleAlignment": "top",
-          			"FontSize": "9"
-				},
-				{
-					"Image": "actions/template/assets/action2",
-					"TitleAlignment": "top",
-          			"FontSize": "9"
+					"Image": "actions/template/assets/action1"
+
 				}
+
 			],
 			"Tooltip": "Tigger an Action Group with a button press",
 			"UUID": "com.novistrum.ksp2flightcontrol.action",
