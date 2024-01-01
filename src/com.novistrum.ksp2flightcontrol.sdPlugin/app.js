@@ -1,12 +1,43 @@
 /// <reference path="libs/js/action.js" />
 /// <reference path="libs/js/stream-deck.js" />
 
+// Build Command:
+// .\DistributionTool.exe -b -i src\com.novistrum.ksp2flightcontrol.sdPlugin -o Release
+
+
 const myAction = new Action('com.novistrum.ksp2flightcontrol.action');
 
 const buttons = [];
 
-
 const updateInterval = setInterval(updateButtonStates, 1000);
+
+const images = [{
+    "SolarPanels": "Buttons/agSolar.png",
+    "Lights": "actions/template/assets/agLights.png",
+    "Custom01": "actions/template/assets/ag1.png"
+}]
+
+function convertImgToBase64(url, callback) {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = function () {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.height = this.height;
+        canvas.width = this.width;
+        ctx.drawImage(this, 0, 0);
+        const dataURL = canvas.toDataURL('image/png');
+        callback(dataURL);
+    };
+    img.src = url;
+}
+
+function imgToBase64(context, actionGroup) {
+    const imageUrl = images[0][actionGroup];
+    convertImgToBase64(imageUrl, function (base64Img) {
+        $SD.setImage(context, base64Img);
+    });
+}
 
 $SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) => {
 	console.log('Stream Deck connected!');
@@ -84,6 +115,11 @@ function updateButtonStates() {
 /// This function should be called when a new button is added from the Property Inspector
 function addButtonFromPropertyInspector(context, actionGroup) {
     try {
+
+        imgToBase64(context, actionGroup)
+        /// Set Button title to stored Value
+        $SD.setTitle(context, actionGroup, 0);
+
         addButton(context, actionGroup);
         updateButtonState(buttons[buttons.length - 1]); /// Update the state immediately
     } catch (error) {
@@ -118,6 +154,8 @@ function generateRandomString(length) {
 myAction.onKeyUp(({ context, payload }) => {
     console.log('Key up event received');
     console.log(payload.settings.action);
+
+    addButtonFromPropertyInspector(context, payload.settings.action)
 
     /// Generate a random 6-character string
     const randomUser = generateRandomString(6);
@@ -163,8 +201,9 @@ myAction.onDidReceiveSettings(({context, payload}) => {
 	
     const storedValue = payload.settings.action || 'None';
     console.log('Stored Value:', storedValue);
+	addButtonFromPropertyInspector(context, storedValue);
 
-	addButtonFromPropertyInspector(context, storedValue)
+
 })
 
 myAction.onDialRotate(({ action, context, device, event, payload }) => {
