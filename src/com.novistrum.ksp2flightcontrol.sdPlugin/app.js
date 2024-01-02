@@ -59,7 +59,8 @@ const images = {
     },
 
     "Other": {
-        "Blank": "",
+        "Blank": "Buttons/Blank1.jpg",
+        "ServerDown": "Buttons/ServerDown.png",
         "Launch": "",
         "Stage": "",
         "Abort": "",
@@ -69,40 +70,54 @@ const images = {
     }
 };
 
+let updateInterval;
+
+let isFetching = false;
+
+let ServerDown = false
+
+const testData = [null,{}]
 
 $SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) => {
 	console.log('Stream Deck connected!');
     
-    // try {
-    //     const requestBody = {
-    //         "ID": generateRandomString(6),
-    //         "Action": "getShiptelemetry",
-    //         "parameters": {
-                
-    //         }
-    //     };
-
-    //     fetch('http://127.0.0.1:8080/api', {
-    //         method: "POST",
-    //         headers: {
-    //             "Content-Type": "application/json"
-    //         },
-    //         body: JSON.stringify(requestBody)
-    //     })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         /// Handle the response data as needed
-	// 		console.log("Data Returned: ", data);
-
-    //     })
-    //     .catch(error => {
-    //         console.error('Error sending POST request:', error);
-    //     });
-    // } catch (error) {
-    //     console.error('Error constructing JSON:', error);
-    // }
+   if (testData[0] != null) {
+    testAPI(testData)
+   }
 
 });
+
+
+function testAPI(action,params) {
+    try {
+        const requestBody = {
+            "ID": generateRandomString(6),
+            "Action": action,
+            "parameters": params
+        };
+
+        fetch('http://127.0.0.1:8080/api', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestBody)
+        })
+        .then(response => response.json())
+        .then(data => {
+            /// Handle the response data as needed
+			console.log("Test Data Returned: ", data);
+
+        })
+        .catch(error => {
+            console.error('Error sending Test POST request:', error);
+        });
+    } catch (error) {
+        console.error('Error constructing Test JSON:', error);
+    }
+
+}
+
 
 
 
@@ -194,6 +209,13 @@ function addButton(context, name) {
 
 };
 
+function getButton(context) {
+    let button = buttons.findIndex(button => button.context === context);
+
+    return button
+}
+
+
 /// Function to make the API request to get the action group state
 function getActionGroupState(button) {
     const randomUser = generateRandomString(6);
@@ -215,9 +237,8 @@ function getActionGroupState(button) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log(button.name, " POST Returned State:", data.Data.Status);
+        //console.log(button.name, " POST Returned State:", data.Data.Status);
         return data.Data.Status;
-    
     })
     .catch(error => {
         console.error('Error getting action group state:', error);
@@ -226,26 +247,7 @@ function getActionGroupState(button) {
 };
 
 
-// Function to update the state of a single button
-async function updateSingleButtonState(context) {
-    const button = buttons.find(b => b.context === context);
-    if (!button) {
-        console.error('Button not found for context:', context);
-        return;
-    }
 
-    try {
-        const status = await getActionGroupState(button);
-        if (status != null && status !== button.lastState) {
-            button.lastState = status;
-            imgToBG(button.context, button.type, button.name, status);
-        }
-
-        
-    } catch (error) {
-        console.error('Error updating button state:', error);
-    }
-}
 
 
 function checkType(name) {
@@ -265,8 +267,8 @@ function checkType(name) {
 
 
 ActionGroupToggle.onKeyUp(({ context, payload }) => {
-    console.log('Key up event received');
-    console.log(payload.settings.action);
+    let actionName = payload.settings.action
+    console.log('Key up event received for', actionName);
 
     /// Generate a random 6-character string
     const randomUser = generateRandomString(6);
@@ -276,7 +278,7 @@ ActionGroupToggle.onKeyUp(({ context, payload }) => {
             "ID": randomUser,
             "Action": "setActionGroupState",
             "parameters": {
-                "ID": payload.settings.action
+                "ID": actionName
             }
         };
 
@@ -290,19 +292,23 @@ ActionGroupToggle.onKeyUp(({ context, payload }) => {
         .then(response => response.json())
         .then(data => {
             /// Handle the response data as needed
-			console.log(payload.settings.action, " status on Key Up:", data.Data.Status);
-            console.log(payload.settings.action," Button Context: ", context)
-
-            const status = data.Data.Status
-            updateSingleButtonState(context, status);
+			console.log(actionName, " In-Game status:", data.Data.Status);
             
+            buttons.forEach((button) => {
+                if (context === button.context) {
+                    button.status = data.Data.Status;
+                    imgToBG(context, button.type, button.name, button.status)
+                }
+            });
 
+            
         })
         .catch(error => {
             console.error('Error sending POST request:', error);
         });
     } catch (error) {
         console.error('Error constructing JSON:', error);
+
     }
 });
 
@@ -326,7 +332,6 @@ ActionGroupToggle.onDidReceiveSettings(({context, payload}) => {
         console.log("Stopping Process till Action Group Selected")
     }
 
-    updateSingleButtonState(context)
 });
 
 ActionGroupToggle.onDialRotate(({ action, context, device, event, payload }) => {
@@ -338,36 +343,33 @@ ActionGroupToggle.onSendToPlugin(({ ActionGroup }) => {
 });
 
 
-let updateInterval;
 
-let isFetching = false;
 
 function startUpdateInterval() {
     updateInterval = setInterval(() => {
         if (!isFetching) {
             updateButtonStates();
         }
-    }, 2000);
+    }, 1000);
+}
+
+function stopUpdateInterval() {
+    clearInterval(updateInterval);
 }
 
 async function updateButtonStates() {
     isFetching = true;
 
     for (const button of buttons) {
-        const status = await getActionGroupState(button);
-
-        // Check if the status has changed before updating
-        if (status !== null && button.lastState !== status) {
-            button.lastState = status;
-            imgToBG(button.context, button.type, button.name, status);
-        }
+            const status = await getActionGroupState(button);
+            // Check if the status has changed before updating
+            if (status !== null && button.lastState !== status) {
+                button.lastState = status;
+                imgToBG(button.context, button.type, button.name, status);
+            } 
     }
 
     isFetching = false;
-}
-
-function stopUpdateInterval() {
-    clearInterval(updateInterval);
 }
 
 
