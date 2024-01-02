@@ -154,7 +154,7 @@ function imgToBG(context, type, name, status) {
             if (error) {
                  console.error('Error loading image:', error);
             } else {
-                // console.log("Updating image on Context:", context);
+                console.log("Updating image on:", name);
                 $SD.setImage(context, base64Img);
             }
         });
@@ -182,12 +182,14 @@ function addButton(context, name) {
     
     if (!existingButton) {
         // If no match is found, add the new button
+
         buttons.push({ context, type, name, lastState:null});
-        // console.log("Button added:", { context, type, name });
+        //console.log("Button added:", { context, type, name });
 
     } else {
         // If a match is found, log a message (you can customize this behavior)
-        console.log("Button with context already exists:", context);
+
+        //console.log("Button with context already exists:", context);
     }
 
 };
@@ -213,7 +215,7 @@ function getActionGroupState(button) {
     })
     .then(response => response.json())
     .then(data => {
-        // console.log(button.name, " POST Returned State:", data.Data.Status);
+        console.log(button.name, " POST Returned State:", data.Data.Status);
         return data.Data.Status;
     
     })
@@ -234,7 +236,8 @@ async function updateSingleButtonState(context) {
 
     try {
         const status = await getActionGroupState(button);
-        if (status != null) {
+        if (status != null && status !== button.lastState) {
+            button.lastState = status;
             imgToBG(button.context, button.type, button.name, status);
         }
 
@@ -246,7 +249,7 @@ async function updateSingleButtonState(context) {
 
 
 function checkType(name) {
-    var type = "Other";
+    let type = "Other";
 
     if ( name in images["ActionGroup"]["True"]) {
         type = "ActionGroup";
@@ -290,7 +293,7 @@ ActionGroupToggle.onKeyUp(({ context, payload }) => {
 			console.log(payload.settings.action, " status on Key Up:", data.Data.Status);
             console.log(payload.settings.action," Button Context: ", context)
 
-            var status = data.Data.Status
+            const status = data.Data.Status
             updateSingleButtonState(context, status);
             
 
@@ -304,7 +307,7 @@ ActionGroupToggle.onKeyUp(({ context, payload }) => {
 });
 
 ActionGroupToggle.onDidReceiveSettings(({context, payload}) => {
-    var contextName = payload.settings.action
+    const contextName = payload.settings.action
 
     if (contextName) {
         console.log('Received settings from Property Inspector:', payload);
@@ -315,11 +318,8 @@ ActionGroupToggle.onDidReceiveSettings(({context, payload}) => {
         
         buttons.forEach((button) => {
             if (context === button.context) {
-                var index = buttons.findIndex((button) => button.context === context);
                 button.name = contextName;
                 button.type = checkType(contextName);
-                
-                
             }
         });
     } else {
@@ -340,13 +340,30 @@ ActionGroupToggle.onSendToPlugin(({ ActionGroup }) => {
 
 let updateInterval;
 
+let isFetching = false;
+
 function startUpdateInterval() {
     updateInterval = setInterval(() => {
-        buttons.forEach(button => {
-            const status = getActionGroupState(button);
-            updateSingleButtonState(button.context, status);
-        });
-    }, 2000); // Run every 1000 milliseconds (1 second)
+        if (!isFetching) {
+            updateButtonStates();
+        }
+    }, 2000);
+}
+
+async function updateButtonStates() {
+    isFetching = true;
+
+    for (const button of buttons) {
+        const status = await getActionGroupState(button);
+
+        // Check if the status has changed before updating
+        if (status !== null && button.lastState !== status) {
+            button.lastState = status;
+            imgToBG(button.context, button.type, button.name, status);
+        }
+    }
+
+    isFetching = false;
 }
 
 function stopUpdateInterval() {
