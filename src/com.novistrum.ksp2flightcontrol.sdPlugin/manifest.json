@@ -2,7 +2,7 @@
 	"SDKVersion": 2,
 	"Author": "Novistrum",
 	"CodePath": "app.html",
-	"Description": "Example description",
+	"Description": "Control your Vessel in KSP2 with the Kerbal Web Program Mod",
 	"Name": "KSP2 Flight Control",
 	"Icon": "actions/template/assets/plugin",
 	"URL": "",
@@ -64,19 +64,6 @@
 			],
 			"Tooltip": "Set the SAS Mode of the Vessel",
 			"UUID": "com.novistrum.ksp2flightcontrol.sas"
-		},
-
-		{
-			"Icon": "actions/template/assets/abort",
-			"Name": "Abort",
-			"Controllers": ["Keypad"],
-			"States": [
-				{
-					"Image": "actions/template/assets/abort"
-				}
-			],
-			"Tooltip": "Trigger your Abort Action Group",
-			"UUID": "com.novistrum.ksp2flightcontrol.abort"
 		},
 		
 		{

@@ -10,10 +10,11 @@ const images = {
     "ActionGroup": {
         "True": {
             "Blank": "Buttons/ActionGroup/True/Blank.jpg",
+            "Abort": "Buttons/ActionGroup/True/Abort.png",
             "SolarPanels": "Buttons/ActionGroup/True/SolarPanels.png",
             "Lights": "Buttons/ActionGroup/True/Lights.png",
             "Gear": "Buttons/ActionGroup/True/Gear.png",
-            "Brakes": "Buttons/ActionGroup/False/Brakes.png", /// May need fixing in the future
+            "Brakes": "Buttons/ActionGroup/True/Brakes.png", /// May need fixing in the future
             "RadiatorPanels": "Buttons/ActionGroup/True/RadiatorPanels.png",
             "Science": "Buttons/ActionGroup/True/Science.png",
             "RCS": "Buttons/ActionGroup/True/RCS.png",
@@ -31,10 +32,11 @@ const images = {
         },
         "False": {
             "Blank": "Buttons/ActionGroup/False/Blank.jpg",
+            "Abort": "Buttons/ActionGroup/False/Abort.png",
             "SolarPanels": "Buttons/ActionGroup/False/SolarPanels.png",
             "Lights": "Buttons/ActionGroup/False/Lights.png",
             "Gear": "Buttons/ActionGroup/False/Gear.png",
-            "Brakes": "Buttons/ActionGroup/True/Brakes.png", /// May need fixing in the future
+            "Brakes": "Buttons/ActionGroup/False/Brakes.png", /// May need fixing in the future
             "RadiatorPanels": "Buttons/ActionGroup/False/RadiatorPanels.png",
             "Science": "Buttons/ActionGroup/False/Science.png",
             "RCS": "Buttons/ActionGroup/False/RCS.png",
@@ -71,34 +73,34 @@ const images = {
 $SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) => {
 	console.log('Stream Deck connected!');
     
-    try {
-        const requestBody = {
-            "ID": generateRandomString(6),
-            "Action": "getShiptelemetry",
-            "parameters": {
+    // try {
+    //     const requestBody = {
+    //         "ID": generateRandomString(6),
+    //         "Action": "getShiptelemetry",
+    //         "parameters": {
                 
-            }
-        };
+    //         }
+    //     };
 
-        fetch('http://127.0.0.1:8080/api', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestBody)
-        })
-        .then(response => response.json())
-        .then(data => {
-            /// Handle the response data as needed
-			console.log("Data Returned: ", data);
+    //     fetch('http://127.0.0.1:8080/api', {
+    //         method: "POST",
+    //         headers: {
+    //             "Content-Type": "application/json"
+    //         },
+    //         body: JSON.stringify(requestBody)
+    //     })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         /// Handle the response data as needed
+	// 		console.log("Data Returned: ", data);
 
-        })
-        .catch(error => {
-            console.error('Error sending POST request:', error);
-        });
-    } catch (error) {
-        console.error('Error constructing JSON:', error);
-    }
+    //     })
+    //     .catch(error => {
+    //         console.error('Error sending POST request:', error);
+    //     });
+    // } catch (error) {
+    //     console.error('Error constructing JSON:', error);
+    // }
 
 });
 
@@ -150,9 +152,9 @@ function imgToBG(context, type, name, status) {
     if (imageUrl) {
         imgToBase64(imageUrl, (error, base64Img) => {
             if (error) {
-                console.error('Error loading image:', error);
+                 console.error('Error loading image:', error);
             } else {
-                console.log("Updating image on Context:", context);
+                // console.log("Updating image on Context:", context);
                 $SD.setImage(context, base64Img);
             }
         });
@@ -180,8 +182,8 @@ function addButton(context, name) {
     
     if (!existingButton) {
         // If no match is found, add the new button
-        buttons.push({ context, type, name});
-        console.log("Button added:", { context, type, name });
+        buttons.push({ context, type, name, lastState:null});
+        // console.log("Button added:", { context, type, name });
 
     } else {
         // If a match is found, log a message (you can customize this behavior)
@@ -211,8 +213,9 @@ function getActionGroupState(button) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log(button.name, " POST Returned State:", data.Data.Status);
+        // console.log(button.name, " POST Returned State:", data.Data.Status);
         return data.Data.Status;
+    
     })
     .catch(error => {
         console.error('Error getting action group state:', error);
@@ -231,7 +234,11 @@ async function updateSingleButtonState(context) {
 
     try {
         const status = await getActionGroupState(button);
-        imgToBG(button.context, button.type, button.name, status);
+        if (status != null) {
+            imgToBG(button.context, button.type, button.name, status);
+        }
+
+        
     } catch (error) {
         console.error('Error updating button state:', error);
     }
