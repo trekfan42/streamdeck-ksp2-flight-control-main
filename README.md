@@ -14,6 +14,7 @@ The toggled status updates based on the status of the toggle in the game. So the
 
 Currently only the action group toggle button are functioning.
 These are the included action groups:
+- abort
 - brakes
 - gear
 - lights
