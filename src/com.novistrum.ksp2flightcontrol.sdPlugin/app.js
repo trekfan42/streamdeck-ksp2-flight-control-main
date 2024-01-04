@@ -5,70 +5,6 @@
 const ActionGroupToggle = new Action('com.novistrum.ksp2flightcontrol.action');
 const ThrustDial = new Action("com.novistrum.ksp2flightcontrol.thrust")
 
-const images = {
-    "ActionGroup": {
-        "True": {
-            "Blank": "Buttons/ActionGroup/True/Blank.jpg",
-            "Abort": "Buttons/ActionGroup/True/Abort.png",
-            "SolarPanels": "Buttons/ActionGroup/True/SolarPanels.png",
-            "Lights": "Buttons/ActionGroup/True/Lights.png",
-            "Gear": "Buttons/ActionGroup/True/Gear.png",
-            "Brakes": "Buttons/ActionGroup/True/Brakes.png", /// May need fixing in the future
-            "RadiatorPanels": "Buttons/ActionGroup/True/RadiatorPanels.png",
-            "Science": "Buttons/ActionGroup/True/Science.png",
-            "RCS": "Buttons/ActionGroup/True/RCS.png",
-            "SAS": "Buttons/ActionGroup/True/SAS.png",
-            "Custom01": "Buttons/ActionGroup/True/Custom01.png",
-            "Custom02": "Buttons/ActionGroup/True/Custom02.png",
-            "Custom03": "Buttons/ActionGroup/True/Custom03.png",
-            "Custom04": "Buttons/ActionGroup/True/Custom04.png",
-            "Custom05": "Buttons/ActionGroup/True/Custom05.png",
-            "Custom06": "Buttons/ActionGroup/True/Custom06.png",
-            "Custom07": "Buttons/ActionGroup/True/Custom07.png",
-            "Custom08": "Buttons/ActionGroup/True/Custom08.png",
-            "Custom09": "Buttons/ActionGroup/True/Custom09.png",
-            "Custom10": "Buttons/ActionGroup/True/Custom10.png"
-        },
-        "False": {
-            "Blank": "Buttons/ActionGroup/False/Blank.jpg",
-            "Abort": "Buttons/ActionGroup/False/Abort.png",
-            "SolarPanels": "Buttons/ActionGroup/False/SolarPanels.png",
-            "Lights": "Buttons/ActionGroup/False/Lights.png",
-            "Gear": "Buttons/ActionGroup/False/Gear.png",
-            "Brakes": "Buttons/ActionGroup/False/Brakes.png", /// May need fixing in the future
-            "RadiatorPanels": "Buttons/ActionGroup/False/RadiatorPanels.png",
-            "Science": "Buttons/ActionGroup/False/Science.png",
-            "RCS": "Buttons/ActionGroup/False/RCS.png",
-            "SAS": "Buttons/ActionGroup/False/SAS.png",
-            "Custom01": "Buttons/ActionGroup/False/Custom01.png",
-            "Custom02": "Buttons/ActionGroup/False/Custom02.png",
-            "Custom03": "Buttons/ActionGroup/False/Custom03.png",
-            "Custom04": "Buttons/ActionGroup/False/Custom04.png",
-            "Custom05": "Buttons/ActionGroup/False/Custom05.png",
-            "Custom06": "Buttons/ActionGroup/False/Custom06.png",
-            "Custom07": "Buttons/ActionGroup/False/Custom07.png",
-            "Custom08": "Buttons/ActionGroup/False/Custom08.png",
-            "Custom09": "Buttons/ActionGroup/False/Custom09.png",
-            "Custom10": "Buttons/ActionGroup/False/Custom10.png"
-        }
-    },
-
-    "SAS": {
-        "StabilityAssist": ""
-    },
-
-    "Other": {
-        "Blank": "Buttons/Blank1.jpg",
-        "ServerDown": "Buttons/ServerDown.png",
-        "Launch": "",
-        "Stage": "",
-        "Abort": "",
-        "RCS": "",
-        "SAS": "",
-
-    }
-};
-
 let updateInterval;
 
 let isFetching = false;
@@ -129,7 +65,6 @@ function callAPI(apiInputs) {
 }
 
 
-/// Function to generate a random alphanumeric string of a given length
 function generateRandomString(length) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let randomString = '';
@@ -159,19 +94,15 @@ function imgToBase64(url, callback) {
 }
 
 function imgToBG(context, type, name, status) {
-    var imageUrl = "";
-
-    console.log(`Trying to set image for: ${type}, name: ${name}, status: ${status}`);
-
-    // Check if status is defined and not falsy
-    if (status === "True" || status === "False") {
+    var imageUrl = null;
+    if (type === "ActionGroup") {
         console.log("status is string True")
-        imageUrl = images[type] && images[type][status] && images[type][status][name];
-    } else {
+        imageUrl = "Buttons/ActionGroup/"+status+"/"+name+".png"
+    } 
+    if (type === "Other") {
         console.log("button is not an Action Group Toggle")
-        imageUrl = images[type] && images[type][name];
+        imageUrl = "Buttons/Other/"+name+".png"
     }
-
     if (imageUrl) {
         imgToBase64(imageUrl, (error, base64Img) => {
             if (error) {
@@ -183,10 +114,8 @@ function imgToBG(context, type, name, status) {
         });
     } else {
         console.error(`Image URL not found for type: ${type}, name: ${name}, status: ${status}`);
-
         // Set a placeholder or default image if imageUrl is not found
-        // For example, you can set a blank image
-        imgToBase64(images["ActionGroup"]["False"]["Blank"], (error, base64Img) => {
+        imgToBase64("Buttons/Other/BlankToggleOff.png", (error, base64Img) => {
             if (!error) {
                 $SD.setImage(context, base64Img);
             } else {
@@ -197,23 +126,18 @@ function imgToBG(context, type, name, status) {
 }
 
 
+// ACTION GROUP TOGGLES
+
 /// Function to handle adding a new button to the buttons array
-async function addButton(context, name) {
-    const type = checkType(name);
+async function addButton(context, name, type) {
     // Check if a button with the same context already exists
     const existingButton = buttons.find(button => button.context === context);
-    
     if (!existingButton) {
         // If no match is found, add the new button
         const newStatus = await callAPI(["getActionGroupState", { "ID": name }]);
             console.log("Status returned:", newStatus);
-
         buttons.push({ context, type, name, newStatus});
-        //console.log("Button added:", { context, type, name });
-
     } else {
-        // If a match is found, log a message (you can customize this behavior)
-
         //console.log("Button with context already exists:", context);
     }
 
@@ -225,35 +149,17 @@ function getButton(context) {
     return button
 }
 
-function checkType(name) {
-    let type = "Other";
-
-    if ( name in images["ActionGroup"]["True"]) {
-        type = "ActionGroup";
-    } ;
-    if ( name in images["SAS"]) {
-        type = "SAS";
-    };
-
-    return type
-};
-
 ActionGroupToggle.onKeyUp(({ context, payload }) => {
     let actionName = payload.settings.action
     console.log('Key up event received for', actionName);
-
-    /// Generate a random 6-character string
-    const randomUser = generateRandomString(6);
-
     try {
         const requestBody = {
-            "ID": randomUser,
+            "ID": generateRandomString(6),
             "Action": "setActionGroupState",
             "parameters": {
                 "ID": actionName
             }
         };
-
         fetch('http://127.0.0.1:8080/api', {
             method: "POST",
             headers: {
@@ -265,45 +171,37 @@ ActionGroupToggle.onKeyUp(({ context, payload }) => {
         .then(data => {
             /// Handle the response data as needed
 			console.log(actionName, " In-Game status:", data.Data.Status);
-            
             buttons.forEach((button) => {
                 if (context === button.context) {
                     button.status = data.Data.Status;
                     imgToBG(context, button.type, button.name, button.status)
                 }
             });
-
-            
         })
         .catch(error => {
             console.error('Error sending POST request:', error);
         });
     } catch (error) {
         console.error('Error constructing JSON:', error);
-
     }
 });
 
 ActionGroupToggle.onDidReceiveSettings(({context, payload}) => {
     const contextName = payload.settings.action
-
+    const contextType = payload.settings.type
     if (contextName) {
         console.log('Received settings from Property Inspector:', payload);
-
-        addButton(context, contextName);
-
+        addButton(context, contextName, contextType);
         console.log(contextName, 'Added');
-        
         buttons.forEach((button) => {
             if (context === button.context) {
                 button.name = contextName;
-                button.type = checkType(contextName);                
+                button.type = contextType;                
             }
         });
     } else {
         console.log("Stopping Process till Action Group Selected")
     }
-
 });
 
 function startUpdateInterval() {
@@ -323,7 +221,6 @@ async function updateButtonStates() {
         try {
             const newStatus = await callAPI(["getActionGroupState", { "ID": button.name }]);
             console.log("Status returned:", newStatus);
-
             // Check if the status has changed before updating
             if (newStatus !== null && button.lastState !== newStatus) {
                 button.lastState = newStatus;
@@ -343,18 +240,15 @@ async function updateButtonStates() {
 ActionGroupToggle.onWillAppear(({ context }) => {
     $SD.getSettings(context);        
     startUpdateInterval();
-
 });
 
 
 ActionGroupToggle.onWillDisappear(({ context }) => {
     stopUpdateInterval();
     const indexToRemove = buttons.findIndex(button => button.context === context);
-    
     if (indexToRemove !== -1) {
         buttons.splice(indexToRemove, 1);
     }
-
     console.log(buttons);
 });
 
