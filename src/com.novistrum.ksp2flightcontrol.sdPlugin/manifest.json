@@ -70,6 +70,17 @@
 			"Icon": "actions/template/assets/blank",
 			"Name": "Thrust",
 			"Controllers": ["Encoder"],
+			"Encoder": {
+                "layout": "",
+                "Icon": "Buttons/Touchbar/Thrust_Static.svg",
+                "StackColor": "#0000FF",
+                "TriggerDescription": {
+                    "Rotate": "Adjust Thrust Percentage",
+                    "Push": "Thrust to 0%",
+                    "Touch": "Thrust to 100%",
+                    "LongTouch": "Unused"
+                }
+            },
 			"States": [
 				{
 					"Image": "actions/template/assets/blank"

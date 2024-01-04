@@ -3,8 +3,7 @@
 
 
 const ActionGroupToggle = new Action('com.novistrum.ksp2flightcontrol.action');
-
-const buttons = [];
+const ThrustDial = new Action("com.novistrum.ksp2flightcontrol.thrust")
 
 const images = {
     "ActionGroup": {
@@ -74,53 +73,60 @@ let updateInterval;
 
 let isFetching = false;
 
-let ServerDown = false
+let ServerDown = false;
 
-const testData = [null,{}]
+const buttons = [];
 
 $SD.onConnected(({ actionInfo, appInfo, connection, messageType, port, uuid }) => {
 	console.log('Stream Deck connected!');
-    
-   if (testData[0] != null) {
-    testAPI(testData)
-   }
-
 });
 
+// apiInputs arg should be array: [String,Dictionary]: ["Action",{"ParmeterKey":"ParameterValue"}]
+function callAPI(apiInputs) {
+    return new Promise((resolve, reject) => {
+        isFetching = true;
+        try {
+            const requestBody = {
+                "ID": generateRandomString(6),
+                "Action": apiInputs[0],
+                "parameters": apiInputs[1]
+            };
 
-function testAPI(action,params) {
-    try {
-        const requestBody = {
-            "ID": generateRandomString(6),
-            "Action": action,
-            "parameters": params
-        };
-
-        fetch('http://127.0.0.1:8080/api', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestBody)
-        })
-        .then(response => response.json())
-        .then(data => {
-            /// Handle the response data as needed
-			console.log("Test Data Returned: ", data);
-
-        })
-        .catch(error => {
-            console.error('Error sending Test POST request:', error);
-        });
-    } catch (error) {
-        console.error('Error constructing Test JSON:', error);
-    }
-
+            fetch('http://127.0.0.1:8080/api', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestBody)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("new callApi Data: ", data);
+                    if (apiInputs[0].includes("get")) {
+                        if (apiInputs[0] === "getActionGroupState") {
+                            console.log("returning data for: ", apiInputs[1]["ID"]);
+                            let status = data.Data.Status;
+                            resolve(status);
+                        } else {
+                            reject("found no such Action Type");
+                        }
+                    } else {
+                        reject("phrase: 'get', not found in Action Type");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending Test POST request:', error);
+                    reject(null);
+                })
+                .finally(() => {
+                    isFetching = false;
+                });
+        } catch (error) {
+            console.error('Error constructing Test JSON:', error);
+            reject(null);
+        }
+    });
 }
-
-
-
-
 
 
 /// Function to generate a random alphanumeric string of a given length
@@ -133,8 +139,6 @@ function generateRandomString(length) {
     }
     return randomString;
 };
-
-
 
 function imgToBase64(url, callback) {
     const img = new Image();
@@ -157,10 +161,14 @@ function imgToBase64(url, callback) {
 function imgToBG(context, type, name, status) {
     var imageUrl = "";
 
+    console.log(`Trying to set image for: ${type}, name: ${name}, status: ${status}`);
+
     // Check if status is defined and not falsy
-    if (status) {
+    if (status === "True" || status === "False") {
+        console.log("status is string True")
         imageUrl = images[type] && images[type][status] && images[type][status][name];
     } else {
+        console.log("button is not an Action Group Toggle")
         imageUrl = images[type] && images[type][name];
     }
 
@@ -190,15 +198,17 @@ function imgToBG(context, type, name, status) {
 
 
 /// Function to handle adding a new button to the buttons array
-function addButton(context, name) {
+async function addButton(context, name) {
     const type = checkType(name);
     // Check if a button with the same context already exists
     const existingButton = buttons.find(button => button.context === context);
     
     if (!existingButton) {
         // If no match is found, add the new button
+        const newStatus = await callAPI(["getActionGroupState", { "ID": name }]);
+            console.log("Status returned:", newStatus);
 
-        buttons.push({ context, type, name, lastState:null});
+        buttons.push({ context, type, name, newStatus});
         //console.log("Button added:", { context, type, name });
 
     } else {
@@ -215,41 +225,6 @@ function getButton(context) {
     return button
 }
 
-
-/// Function to make the API request to get the action group state
-function getActionGroupState(button) {
-    const randomUser = generateRandomString(6);
-
-    const requestBody = {
-        "ID": randomUser,
-        "Action": "getActionGroupState",
-        "parameters": {
-            "ID": button.name
-        }
-    };
-
-    return fetch('http://127.0.0.1:8080/api', {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestBody)
-    })
-    .then(response => response.json())
-    .then(data => {
-        //console.log(button.name, " POST Returned State:", data.Data.Status);
-        return data.Data.Status;
-    })
-    .catch(error => {
-        console.error('Error getting action group state:', error);
-        return null;
-    });
-};
-
-
-
-
-
 function checkType(name) {
     let type = "Other";
 
@@ -262,9 +237,6 @@ function checkType(name) {
 
     return type
 };
-
-
-
 
 ActionGroupToggle.onKeyUp(({ context, payload }) => {
     let actionName = payload.settings.action
@@ -325,7 +297,7 @@ ActionGroupToggle.onDidReceiveSettings(({context, payload}) => {
         buttons.forEach((button) => {
             if (context === button.context) {
                 button.name = contextName;
-                button.type = checkType(contextName);
+                button.type = checkType(contextName);                
             }
         });
     } else {
@@ -334,22 +306,11 @@ ActionGroupToggle.onDidReceiveSettings(({context, payload}) => {
 
 });
 
-ActionGroupToggle.onDialRotate(({ action, context, device, event, payload }) => {
-	console.log('Your dial code goes here!');
-});
-
-ActionGroupToggle.onSendToPlugin(({ ActionGroup }) => {
-	console.log('Action Group Selection received');
-});
-
-
-
-
 function startUpdateInterval() {
     updateInterval = setInterval(() => {
         if (!isFetching) {
             updateButtonStates();
-        }
+        };
     }, 1000);
 }
 
@@ -358,24 +319,31 @@ function stopUpdateInterval() {
 }
 
 async function updateButtonStates() {
-    isFetching = true;
-
     for (const button of buttons) {
-            const status = await getActionGroupState(button);
-            // Check if the status has changed before updating
-            if (status !== null && button.lastState !== status) {
-                button.lastState = status;
-                imgToBG(button.context, button.type, button.name, status);
-            } 
-    }
+        try {
+            const newStatus = await callAPI(["getActionGroupState", { "ID": button.name }]);
+            console.log("Status returned:", newStatus);
 
-    isFetching = false;
+            // Check if the status has changed before updating
+            if (newStatus !== null && button.lastState !== newStatus) {
+                button.lastState = newStatus;
+                imgToBG(button.context, button.type, button.name, newStatus);
+            } else if (newStatus === null) {
+                console.error("Error on status get:", newStatus);
+            } else {
+                console.log("Button State unchanged.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
 }
 
 
 ActionGroupToggle.onWillAppear(({ context }) => {
-    $SD.getSettings(context);    
+    $SD.getSettings(context);        
     startUpdateInterval();
+
 });
 
 
@@ -389,3 +357,29 @@ ActionGroupToggle.onWillDisappear(({ context }) => {
 
     console.log(buttons);
 });
+
+
+
+
+
+/// THRUST DIAL
+
+ThrustDial.onDialPress(({action,context,device,event,payload}) => {
+    if (!payload.pressed) {
+        console.log("Dial press released")
+    }
+});
+
+ThrustDial.onDialRotate(({ action, context, device, event, payload }) => {
+    if (!payload.pressed) {
+        if (payload.ticks == "1"){
+            console.log("CW")
+        } else {
+            console.log("CCW")
+        }
+    }
+});
+
+function checkThrust() {
+    console.log("checking thrust value")
+}
