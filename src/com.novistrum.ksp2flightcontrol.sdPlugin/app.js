@@ -8,7 +8,7 @@ const ThrustDial = new Action("com.novistrum.ksp2flightcontrol.thrust")
 let updateInterval;
 
 let isFetching = false;
-
+let thrustOveride = false
 let ServerDown = false;
 
 const buttons = [];
@@ -35,28 +35,30 @@ function callAPI(apiInputs) {
                 },
                 body: JSON.stringify(requestBody)
             })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("new callApi Data: ", data);
-                    if (apiInputs[0].includes("get")) {
-                        if (apiInputs[0] === "getActionGroupState") {
-                            console.log("returning data for: ", apiInputs[1]["ID"]);
-                            let status = data.Data.Status;
-                            resolve(status);
-                        } else {
-                            reject("found no such Action Type");
-                        }
-                    } else {
-                        reject("phrase: 'get', not found in Action Type");
+            .then(response => response.json())
+            .then(data => {
+                if (apiInputs[0].includes("get")) {
+                    if (apiInputs[0] === "getActionGroupState") {
+                        let status = data.Data.Status;
+                        resolve(status);
+                    } 
+                    if (apiInputs[0] === "getShipThrottle") {
+                        let status = data.Data.Throttle;
+                        resolve(status);
                     }
-                })
-                .catch(error => {
-                    console.error('Error sending Test POST request:', error);
-                    reject(null);
-                })
-                .finally(() => {
-                    isFetching = false;
-                });
+
+                } else {
+                    resolve(null)
+                }
+                
+            })
+            .catch(error => {
+                console.error('Error sending Test POST request:', error);
+                reject(null);
+            })
+            .finally(() => {
+                isFetching = false;
+            });
         } catch (error) {
             console.error('Error constructing Test JSON:', error);
             reject(null);
@@ -96,11 +98,9 @@ function imgToBase64(url, callback) {
 function imgToBG(context, type, name, status) {
     var imageUrl = null;
     if (type === "ActionGroup") {
-        console.log("status is string True")
         imageUrl = "Buttons/ActionGroup/"+status+"/"+name+".png"
     } 
     if (type === "Other") {
-        console.log("button is not an Action Group Toggle")
         imageUrl = "Buttons/Other/"+name+".png"
     }
     if (imageUrl) {
@@ -108,7 +108,6 @@ function imgToBG(context, type, name, status) {
             if (error) {
                  console.error('Error loading image:', error);
             } else {
-                console.log("Updating image on:", name);
                 $SD.setImage(context, base64Img);
             }
         });
@@ -133,20 +132,39 @@ async function addButton(context, name, type) {
     // Check if a button with the same context already exists
     const existingButton = buttons.find(button => button.context === context);
     if (!existingButton) {
-        // If no match is found, add the new button
-        const newStatus = await callAPI(["getActionGroupState", { "ID": name }]);
+        if (type === "ActionGroup") {
+            const newStatus = await callAPI(["getActionGroupState", { "ID": name }]);
             console.log("Status returned:", newStatus);
-        buttons.push({ context, type, name, newStatus});
+            buttons.push({ context, type, name, newStatus});
+        }
+        if (type === "Other") {
+            if (name === "Thrust" && !thrustOveride) {
+                const newStatus = await callAPI(["getShipThrottle", {}]);
+                console.log("Status returned:", newStatus);
+                buttons.push({ context, type, name, newStatus});
+            }
+            
+        }
+            
     } else {
         //console.log("Button with context already exists:", context);
     }
-
+    console.log(buttons)
 };
 
 function getButton(context) {
     let button = buttons.findIndex(button => button.context === context);
 
     return button
+}
+
+
+function removeButton(context) {
+    const indexToRemove = buttons.findIndex(button => button.context === context);
+    if (indexToRemove !== -1) {
+        buttons.splice(indexToRemove, 1);
+    }
+    console.log(buttons);
 }
 
 ActionGroupToggle.onKeyUp(({ context, payload }) => {
@@ -206,10 +224,11 @@ ActionGroupToggle.onDidReceiveSettings(({context, payload}) => {
 
 function startUpdateInterval() {
     updateInterval = setInterval(() => {
-        if (!isFetching) {
+        if (!isFetching && !thrustOveride) {
             updateButtonStates();
+
         };
-    }, 1000);
+    }, 500);
 }
 
 function stopUpdateInterval() {
@@ -217,23 +236,34 @@ function stopUpdateInterval() {
 }
 
 async function updateButtonStates() {
-    for (const button of buttons) {
+    const promises = buttons.map(async (button) => {
         try {
-            const newStatus = await callAPI(["getActionGroupState", { "ID": button.name }]);
-            console.log("Status returned:", newStatus);
-            // Check if the status has changed before updating
+            let newStatus = null;
+
+            if (button.type === "ActionGroup") {
+                newStatus = await callAPI(["getActionGroupState", { "ID": button.name }]);
+                imgToBG(button.context, button.type, button.name, newStatus);
+            } else if (button.type === "Other" && button.name === "Thrust") {
+                newStatus = await callAPI(["getShipThrottle", {}]);
+                thrust = Math.round(Number(newStatus.toFixed(2)) * 100);
+                // Update the layout
+                let payload = {
+                        "value": thrust,
+                        "indicator": { "value": thrust}
+                    };
+                $SD.setFeedback(button.context, payload)
+            }
             if (newStatus !== null && button.lastState !== newStatus) {
                 button.lastState = newStatus;
-                imgToBG(button.context, button.type, button.name, newStatus);
             } else if (newStatus === null) {
                 console.error("Error on status get:", newStatus);
-            } else {
-                console.log("Button State unchanged.");
             }
         } catch (error) {
             console.error("Error:", error);
         }
-    }
+    });
+
+    await Promise.all(promises);
 }
 
 
@@ -245,11 +275,7 @@ ActionGroupToggle.onWillAppear(({ context }) => {
 
 ActionGroupToggle.onWillDisappear(({ context }) => {
     stopUpdateInterval();
-    const indexToRemove = buttons.findIndex(button => button.context === context);
-    if (indexToRemove !== -1) {
-        buttons.splice(indexToRemove, 1);
-    }
-    console.log(buttons);
+    removeButton(context)
 });
 
 
@@ -257,23 +283,100 @@ ActionGroupToggle.onWillDisappear(({ context }) => {
 
 
 /// THRUST DIAL
+ThrustDial.onWillAppear(({context}) => {
+    $SD.getSettings(context)
+    addButton(context, "Thrust", "Other")
+    startUpdateInterval();
+
+    let payload = {
+        "title": {"value": "Thrust","alignment": "Center", "font": {"size": 30},"zOrder":3},
+        "value": {"alignment": "Center", "font": {"size": 30},"zOrder":2},
+        "icon": {"value":"Buttons/TouchBar/ThrustIcon.svg", "rect":[0,0,200,100], "zOrder":0,},
+        "indicator": { "rect": [25,65,150,40], "bar_bg_c":"0:#ff0000,0.4:#00ff00,1:#00ff00", "zOrder":1}
+    };
+    $SD.setFeedback(context, payload)
+
+});
+
+ThrustDial.onWillDisappear(({context}) => {
+    stopUpdateInterval();
+    removeButton(context)
+})
 
 ThrustDial.onDialPress(({action,context,device,event,payload}) => {
     if (!payload.pressed) {
         console.log("Dial press released")
+        updateThrust(0.0)
     }
 });
+
+ThrustDial.onTouchTap(({action,context,device,event,payload}) => {
+    if (!payload.pressed) {
+        console.log("Touch Tap")
+        updateThrust(1.0)
+    }
+});
+
+const rotationThreshold = 0.1; // Adjust this threshold to control the speed sensitivity
+let rotationTimer;
+let lastRotationTime = Date.now(); // Initialize with the current time
 
 ThrustDial.onDialRotate(({ action, context, device, event, payload }) => {
     if (!payload.pressed) {
-        if (payload.ticks == "1"){
-            console.log("CW")
-        } else {
-            console.log("CCW")
+        clearTimeout(rotationTimer);
+
+        let thrust = null;
+        for (const button of buttons) {
+            if (context === button.context && button.name === "Thrust") {
+                thrustButton = button;
+                thrust = button.lastState;
+
+                const rotationTicks = parseInt(payload.ticks, 10);
+
+                // Calculate time since the last rotation event
+                const currentTime = Date.now();
+                const timeDelta = currentTime - lastRotationTime;
+                lastRotationTime = currentTime;
+
+                // Calculate rotation speed based on timeDelta
+                const rotationSpeed = timeDelta > 0 ? Math.abs(rotationTicks / timeDelta) * 3 : 0;
+                console.log("Rotation Ticks", rotationTicks);
+                console.log("Time Delta: ", timeDelta);
+                console.log("Rotation Speed: ", rotationSpeed);
+                console.log("Rotation Threshold: ", rotationThreshold);
+
+                if (rotationSpeed > rotationThreshold) {
+                    // Fast rotation
+                    thrust += rotationTicks > 0 ? 0.05 : -0.05;
+                    console.log("Rotated fast");
+                } else {
+                    // Slow rotation
+                    thrust += rotationTicks > 0 ? 0.01 : -0.01;
+                    console.log("Rotated slow");
+                }
+
+                thrust = Math.min(1.0, Math.max(0.0, thrust)); // Ensure thrust stays in [0.0, 1.0]
+                thrust = Number(thrust.toFixed(2));
+
+                button.lastState = thrust;
+                updateThrust(thrust);
+            }
         }
+
+        rotationTimer = setTimeout(() => {
+            // Handle the end of rotation (user has stopped turning the dial)
+            console.log("Dial rotation stopped");
+        }, 250); // Adjust the delay as needed
     }
 });
 
-function checkThrust() {
-    console.log("checking thrust value")
+
+
+async function updateThrust(newThrust) {
+    thrustOveride = true;
+    console.log("New Thrust:", newThrust);
+    await callAPI(["setShipThrottle", { "Throttle": newThrust }]);
+    thrustOveride = false
 }
+
+

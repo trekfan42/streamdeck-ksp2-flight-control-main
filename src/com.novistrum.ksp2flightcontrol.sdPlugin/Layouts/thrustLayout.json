@@ -1,0 +1,38 @@
+{
+  "id": "thrustLayout",
+  "items": [
+    {
+      "key": "icon",
+      "type": "pixmap",
+      "value": "Buttons/TouchBar/Thrust.svg",
+      "zOrder": 0,
+      "enabled": true,
+      "rect": [0, 0, 200, 100]
+    },
+    {
+      "key": "value",
+      "type": "text",
+      "zOrder": 1,
+      "enabled": true,
+      "rect": [120, 50, 50, 50],
+      "font": { "size": 24, "weight": 600 },
+      "alignment": "right"
+    },
+    {
+      "key": "indicator",
+      "type": "gbar",
+      "zOrder": 2,
+      "enabled": true,
+      "rect": [25, 65, 150, 40],
+      "value": 100,
+      "subtype": 4,
+      "bar_h": 20,
+      "border_w": 0,
+      "bar_bg_c": "0:#ff0000,0.4:#00ff00,1:#00ff00",
+      "range": {
+          "min": 0,
+          "max": 100
+      }
+    }
+  ]
+}
