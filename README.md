@@ -31,3 +31,9 @@ These are the included action groups:
 - logic update launch/staging button, button displays "launch" when on stage 1. every other stage the button shows "next stage"
 - Set SAS Auto Pilot Modes and handle logic for it
 - Receive Resource and Orbital info Readouts
+
+
+## Release
+
+- there is a stream deck plugin file in the release folder if you'd like to file it a whirl.
+- expect bugs, have not optimized much yet, could cause issues, use at your own risk.
