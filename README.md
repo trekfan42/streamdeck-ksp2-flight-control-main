@@ -12,7 +12,7 @@ The toggled status updates based on the status of the toggle in the game. So the
 
 ## Current Progress
 
-Currently only the action group toggle button are functioning.
+Action group toggle button are functioning.
 These are the included action groups:
 - abort
 - brakes
@@ -25,6 +25,7 @@ These are the included action groups:
 - SAS
 - custom 1-10
 
+The Thrust Dial for Stream Deck + is also working
 
 ## Planned Features
 
