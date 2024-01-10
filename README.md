@@ -33,6 +33,11 @@ These are the included action groups:
 - Receive Resource and Orbital info Readouts
 
 
+## Usage
+
+- just install the Kerbal Web Program mod, and this stream deck plugin
+
+
 ## Release
 
 - there is a stream deck plugin file in the release folder if you'd like to give it a whirl.
