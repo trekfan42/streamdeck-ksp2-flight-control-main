@@ -43,3 +43,7 @@ The Thrust Dial for Stream Deck + is also working
 
 - there is a stream deck plugin file in the [Release](https://github.com/trekfan42/streamdeck-ksp2-flight-control-main/tree/main/Release) folder if you'd like to give it a whirl.
 - expect bugs, have not optimized much yet, could cause issues, use at your own risk.
+
+## Extra
+- KSP Forum Thread:
+https://forum.kerbalspaceprogram.com/topic/222519-wip-ksp2-stream-deck-flight-controls/
