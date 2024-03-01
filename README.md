@@ -7,7 +7,7 @@
 Control Your vessel using Rest API requests via the Kerbal Web Program Mod
 https://github.com/Bit-Studios/KerbalWebProgram
 
-The toggled status updates based on the status of the toggle in the game. So the buttons will always represent the ingame status even if you togfle something using the in-game gui.
+The toggled status updates based on the status of the toggle in the game. So the buttons will always represent the ingame status even if you toggle something using the in-game gui.
 
 
 ## Current Progress
